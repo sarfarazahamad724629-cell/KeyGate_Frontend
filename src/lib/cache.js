@@ -76,6 +76,19 @@ export function cacheBust(pathOrPrefix, scope) {
     eachCacheKey((key) => {
       if (key.startsWith(prefix)) localStorage.removeItem(key);
     });
+    if (
+      pathOrPrefix !== '/console-page'
+      && (pathOrPrefix.startsWith('/api/analytics')
+        || pathOrPrefix.startsWith('/api/subkeys')
+        || pathOrPrefix.startsWith('/api/master-keys')
+        || pathOrPrefix.startsWith('/api/projects')
+        || pathOrPrefix.startsWith('/api/billing'))
+    ) {
+      const consolePrefix = cacheKey('/console-page', scope);
+      eachCacheKey((key) => {
+        if (key.startsWith(consolePrefix)) localStorage.removeItem(key);
+      });
+    }
   } catch {
     // silently skip
   }
@@ -103,8 +116,12 @@ export function cacheBustAfterMutation(path, scope) {
     cacheBust('/api/analytics', scope);
     cacheBust('/api/subkeys', scope);
     cacheBust('/api/projects', scope);
+    cacheBust('/console-page', scope);
   }
-  if (path.startsWith('/api/billing')) cacheBust('/api/billing', scope);
+  if (path.startsWith('/api/billing')) {
+    cacheBust('/api/billing', scope);
+    cacheBust('/console-page', scope);
+  }
 }
 
 /** Bust all Lethem cache entries — call on logout, login, or hard reset. */

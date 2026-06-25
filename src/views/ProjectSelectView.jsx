@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useLethem } from '../contexts/LethemContext';
 import { useAuth } from '../contexts/AuthContext';
 import { LogoIcon } from '../components/parts/Logo';
+import { cacheGet, cacheSet } from '../lib/cache';
 import { IconBell, IconBilling, IconCheck, IconDemo, IconExternal, IconLogs, IconPlus, IconSearch, IconSettings, IconSubkey, IconTrash, IconUser } from '../components/parts/Icons';
 
 export default function ProjectSelectView({ go }) {
@@ -38,13 +39,39 @@ export default function ProjectSelectView({ go }) {
 
 
   useEffect(() => {
+    const fallbackUsage = {
+      subkeys: subkeys.length,
+      masterKeys: masterKeys.length,
+      tokens: analytics?.totalTokens || 0,
+      requests: analytics?.totalRequests || analytics?.logs?.length || 0,
+    };
+
     if (!projects.length || !isAuthenticated) {
-      setAccountUsage((current) => ({ ...current, subkeys: subkeys.length, masterKeys: masterKeys.length, tokens: analytics?.totalTokens || 0, requests: analytics?.totalRequests || analytics?.logs?.length || 0 }));
+      setAccountUsage((current) => ({ ...current, ...fallbackUsage }));
       return undefined;
     }
 
+    const cacheScope = user?.sub || 'anonymous';
+    const summaryKey = (project) => `/console-page/project/${project.slug || project.id}/summary`;
+    const cachedSummaries = projects.map((project) => cacheGet(summaryKey(project), cacheScope));
+    const cachedTotal = cachedSummaries.reduce((totals, summary) => {
+      if (!summary) return totals;
+      totals.subkeys += Number(summary.subkeys || 0);
+      totals.masterKeys += Number(summary.masterKeys || 0);
+      totals.tokens += Number(summary.tokens || 0);
+      totals.requests += Number(summary.requests || 0);
+      return totals;
+    }, { subkeys: 0, masterKeys: 0, tokens: 0, requests: 0 });
+
+    if (cachedSummaries.every(Boolean)) {
+      setAccountUsage({ ...cachedTotal, loading: false });
+      return undefined;
+    }
+
+    if (cachedSummaries.some(Boolean)) setAccountUsage({ ...cachedTotal, loading: true });
+    else setAccountUsage((current) => ({ ...current, loading: true }));
+
     let cancelled = false;
-    setAccountUsage((current) => ({ ...current, loading: true }));
 
     const fetchProjectJson = async (project, path) => {
       const token = await getAccessToken();
@@ -54,38 +81,43 @@ export default function ProjectSelectView({ go }) {
       return res.json().catch(() => null);
     };
 
-    Promise.allSettled(projects.map(async (project) => {
+    Promise.allSettled(projects.map(async (project, index) => {
+      const cached = cachedSummaries[index];
+      if (cached) return cached;
+
       const [projectSubkeys, projectMasterKeys, projectAnalytics] = await Promise.all([
         fetchProjectJson(project, '/api/subkeys'),
         fetchProjectJson(project, '/api/master-keys'),
         fetchProjectJson(project, '/api/analytics'),
       ]);
       const logs = projectAnalytics?.logs || [];
-      return {
+      const summary = {
         subkeys: Array.isArray(projectSubkeys) ? projectSubkeys.length : 0,
         masterKeys: Array.isArray(projectMasterKeys) ? projectMasterKeys.length : 0,
         tokens: Number(projectAnalytics?.totalTokens || logs.reduce((sum, log) => sum + Number(log.tokens || log.total_tokens || 0), 0)),
         requests: Number(projectAnalytics?.totalRequests || logs.length || 0),
       };
+      cacheSet(summaryKey(project), summary, cacheScope);
+      return summary;
     }))
       .then((results) => {
         if (cancelled) return;
         const next = results.reduce((totals, result) => {
           if (result.status !== 'fulfilled') return totals;
-          totals.subkeys += result.value.subkeys;
-          totals.masterKeys += result.value.masterKeys;
-          totals.tokens += result.value.tokens;
-          totals.requests += result.value.requests;
+          totals.subkeys += Number(result.value.subkeys || 0);
+          totals.masterKeys += Number(result.value.masterKeys || 0);
+          totals.tokens += Number(result.value.tokens || 0);
+          totals.requests += Number(result.value.requests || 0);
           return totals;
         }, { subkeys: 0, masterKeys: 0, tokens: 0, requests: 0 });
         setAccountUsage({ ...next, loading: false });
       })
       .catch(() => {
-        if (!cancelled) setAccountUsage((current) => ({ ...current, loading: false }));
+        if (!cancelled) setAccountUsage((current) => ({ ...current, ...fallbackUsage, loading: false }));
       });
 
     return () => { cancelled = true; };
-  }, [API, analytics?.logs, analytics?.totalRequests, analytics?.totalTokens, getAccessToken, isAuthenticated, masterKeys.length, projects, subkeys.length]);
+  }, [API, analytics?.logs, analytics?.totalRequests, analytics?.totalTokens, getAccessToken, isAuthenticated, masterKeys.length, projects, subkeys.length, user?.sub]);
 
   const expectedDeleteText = projectToDelete ? `delete ${projectToDelete.slug}` : '';
   const canDeleteProject = projectToDelete && deleteConfirm.trim() === expectedDeleteText;
