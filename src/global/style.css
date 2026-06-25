@@ -2735,3 +2735,24 @@ kbd{
 .console-select-page .console-projects-grid{grid-template-columns:repeat(2,minmax(0,337px));gap:16px}.console-select-page .console-project-card{min-height:182px;border-radius:11px;background:#151827;border-color:#353065;padding:20px!important;box-shadow:none;text-align:left}.console-project-card-header h3{font-size:17px!important}.console-project-card-header .badge{background:#0d553b!important;border-color:#17754f!important;color:#36f28b!important}.console-project-id{background:#202230!important;border-color:#3a3d4a!important}.console-project-delete svg{width:16px;height:16px}
 @media (max-width:1100px){.project-console-nav,.console-select-page .console-select-content{padding-left:18px;padding-right:18px}.project-console-stats,.project-console-actions{grid-template-columns:repeat(2,1fr)}.project-console-steps{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:720px){.project-console-nav{padding:10px 12px}.project-console-user{max-width:170px;overflow:hidden}.console-select-page .project-console-hero{display:grid;gap:14px}.project-console-stats,.project-console-actions,.project-console-meters,.console-select-page .console-projects-grid{grid-template-columns:1fr}.project-console-projects-head{align-items:stretch;flex-direction:column}.project-console-search{width:100%}.project-console-steps{grid-template-columns:1fr}.console-select-page .console-select-content{padding-top:20px}}
+
+/* ── Project console interaction fixes ── */
+.project-console-user-wrap{position:relative}
+.project-console-user{border:1px solid rgba(255,255,255,.9);cursor:pointer;font-family:'DM Sans',sans-serif}
+.project-console-user-menu{position:absolute;right:0;top:calc(100% + 10px);z-index:160;min-width:220px;padding:8px;border:1px solid #30364c;border-radius:12px;background:#111421;box-shadow:0 18px 44px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.07)}
+.project-console-user-menu button{width:100%;display:flex;align-items:center;gap:10px;padding:10px 12px;border:0;border-radius:8px;background:transparent;color:#c9cedd;font:inherit;font-size:13px;text-align:left;cursor:pointer}
+.project-console-user-menu button:hover{background:#1b2031;color:#fff}
+.project-console-user-menu svg{width:16px;height:16px;color:#8d7fff;flex:none}
+.project-console-user-menu .danger{color:#ff8d8d}.project-console-user-menu .danger:hover{background:#ff52521a;color:#ffc5c5}
+.project-console-manage-btn.btn-ghost{background:#181b29!important;border-color:#3a4057!important;color:#f4f6ff!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+.project-console-manage-btn.btn-ghost:hover{background:#242a3d!important;border-color:#7066a8!important;color:#fff!important}
+.project-console-steps button{font-family:'DM Sans',sans-serif;cursor:pointer;text-align:left}
+.project-console-steps .clickable:hover{border-color:#8d7fff;background:#201c35;color:#fff;transform:translateY(-1px)}
+.project-console-steps .clickable.done:hover{border-color:#24c876;background:#123026}
+.project-console-steps .locked{cursor:default}
+.project-console-actions button:has(small:not(:empty)) small{font-weight:600}
+.project-console-actions button small{color:#858a9b}.project-console-actions button small:where(:not(:empty)){line-height:1.2}
+.project-console-steps button{height:33px;border:1px solid #ffffff26;border-radius:6px;display:flex;align-items:center;gap:8px;padding:0 10px;color:#8c90a0;font-size:12px;background:#161824;transition:var(--transition)}
+.project-console-steps button.done{border-color:#146f50;background:#102620;color:#fff}
+.project-console-steps button svg{width:17px;height:17px;border-radius:50%;background:#202230;color:#555b6d;padding:2px;flex:none}
+.project-console-steps button.done svg{background:#24c876;color:#fff}

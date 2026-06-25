@@ -1,8 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLethem } from '../contexts/LethemContext';
 import { useAuth } from '../contexts/AuthContext';
 import { LogoIcon } from '../components/parts/Logo';
-import { IconBell, IconCheck, IconDemo, IconExternal, IconMasterKey, IconPlus, IconSearch, IconSubkey, IconTrash } from '../components/parts/Icons';
+import { IconBell, IconBilling, IconCheck, IconDemo, IconExternal, IconLogs, IconPlus, IconSearch, IconSettings, IconSubkey, IconTrash, IconUser } from '../components/parts/Icons';
 
 export default function ProjectSelectView({ go }) {
   const {
@@ -11,22 +11,81 @@ export default function ProjectSelectView({ go }) {
     projectToDelete, setProjectToDelete,
     deleteConfirm, setDeleteConfirm, deleteProject,
     notif, notify,
-    ctx: { fmtDate, fmtNum, billing, subkeys, masterKeys, analytics },
+    ctx: { API, fmtDate, fmtNum, billing, subkeys, masterKeys, analytics },
   } = useLethem();
-  const { user } = useAuth();
+  const { user, logout, getAccessToken, isAuthenticated } = useAuth();
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [accountUsage, setAccountUsage] = useState({ subkeys: 0, masterKeys: 0, tokens: 0, requests: 0, loading: false });
 
   const currentPlan = billing?.plans?.find((plan) => plan.id === billing.currentPlan) || billing?.plans?.find((plan) => plan.id === 'free');
   const limits = currentPlan?.limits || {};
   const projectLimit = limits.projects ?? 3;
-  const subkeyLimit = limits.subkeys ?? 3;
-  const tokenLimit = limits.tokens ?? 50000;
+  const subkeyLimit = limits.subkeys ?? 20;
+  const tokenLimit = limits.tokens ?? 2000000;
   const projectLimitLabel = projectLimit == null ? 'Unlimited' : projectLimit;
   const subkeyLimitLabel = subkeyLimit == null ? 'Unlimited' : subkeyLimit;
   const tokenLimitLabel = tokenLimit == null ? 'Unlimited' : fmtNum(tokenLimit);
-  const tokenUsage = analytics?.totalTokens || 0;
+  const activeProjectSlug = projects[0]?.slug || projects[0]?.id || '';
+  const goProjectPage = (page) => activeProjectSlug ? go(`/console/${activeProjectSlug}/${page}`) : go('/console/new');
+  const displayedSubkeys = Math.max(accountUsage.subkeys, subkeys.length);
+  const displayedMasterKeys = Math.max(accountUsage.masterKeys, masterKeys.length);
+  const tokenUsage = Math.max(accountUsage.tokens, analytics?.totalTokens || 0);
+  const requestCount = Math.max(accountUsage.requests, analytics?.totalRequests || 0, analytics?.logs?.length || 0);
   const isAtProjectLimit = projectLimit != null && projects.length >= projectLimit;
   const userLabel = user?.email || user?.name || 'obito@keygate.dev';
   const avatar = userLabel.charAt(0).toUpperCase();
+
+
+
+  useEffect(() => {
+    if (!projects.length || !isAuthenticated) {
+      setAccountUsage((current) => ({ ...current, subkeys: subkeys.length, masterKeys: masterKeys.length, tokens: analytics?.totalTokens || 0, requests: analytics?.totalRequests || analytics?.logs?.length || 0 }));
+      return undefined;
+    }
+
+    let cancelled = false;
+    setAccountUsage((current) => ({ ...current, loading: true }));
+
+    const fetchProjectJson = async (project, path) => {
+      const token = await getAccessToken();
+      const projectId = project.slug || project.id;
+      const res = await fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${token}`, 'x-project-id': projectId } });
+      if (!res.ok) return null;
+      return res.json().catch(() => null);
+    };
+
+    Promise.allSettled(projects.map(async (project) => {
+      const [projectSubkeys, projectMasterKeys, projectAnalytics] = await Promise.all([
+        fetchProjectJson(project, '/api/subkeys'),
+        fetchProjectJson(project, '/api/master-keys'),
+        fetchProjectJson(project, '/api/analytics'),
+      ]);
+      const logs = projectAnalytics?.logs || [];
+      return {
+        subkeys: Array.isArray(projectSubkeys) ? projectSubkeys.length : 0,
+        masterKeys: Array.isArray(projectMasterKeys) ? projectMasterKeys.length : 0,
+        tokens: Number(projectAnalytics?.totalTokens || logs.reduce((sum, log) => sum + Number(log.tokens || log.total_tokens || 0), 0)),
+        requests: Number(projectAnalytics?.totalRequests || logs.length || 0),
+      };
+    }))
+      .then((results) => {
+        if (cancelled) return;
+        const next = results.reduce((totals, result) => {
+          if (result.status !== 'fulfilled') return totals;
+          totals.subkeys += result.value.subkeys;
+          totals.masterKeys += result.value.masterKeys;
+          totals.tokens += result.value.tokens;
+          totals.requests += result.value.requests;
+          return totals;
+        }, { subkeys: 0, masterKeys: 0, tokens: 0, requests: 0 });
+        setAccountUsage({ ...next, loading: false });
+      })
+      .catch(() => {
+        if (!cancelled) setAccountUsage((current) => ({ ...current, loading: false }));
+      });
+
+    return () => { cancelled = true; };
+  }, [API, analytics?.logs, analytics?.totalRequests, analytics?.totalTokens, getAccessToken, isAuthenticated, masterKeys.length, projects, subkeys.length]);
 
   const expectedDeleteText = projectToDelete ? `delete ${projectToDelete.slug}` : '';
   const canDeleteProject = projectToDelete && deleteConfirm.trim() === expectedDeleteText;
@@ -34,22 +93,22 @@ export default function ProjectSelectView({ go }) {
   const onboardingSteps = useMemo(() => [
     { label: 'Create account', done: true },
     { label: 'Create first project', done: projects.length > 0 },
-    { label: 'Add provider API key', done: masterKeys.length > 0 },
-    { label: 'Create first subkey', done: subkeys.length > 0 },
-    { label: 'Make first API request', done: tokenUsage > 0 },
-  ], [masterKeys.length, projects.length, subkeys.length, tokenUsage]);
+    { label: 'Add provider API key', done: displayedMasterKeys > 0, onClick: () => goProjectPage('masterkeys') },
+    { label: 'Create first subkey', done: displayedSubkeys > 0, onClick: () => goProjectPage('subkeys') },
+    { label: 'Make first API request', done: requestCount > 0, onClick: () => goProjectPage('demo') },
+  ], [displayedMasterKeys, displayedSubkeys, projects.length, requestCount, activeProjectSlug]);
   const completedSteps = onboardingSteps.filter((step) => step.done).length;
   const onboardingPercent = (completedSteps / onboardingSteps.length) * 100;
 
   const usageCards = [
     { label: 'Projects', value: `${projects.length} / ${projectLimitLabel}`, icon: '▣' },
-    { label: 'Subkeys', value: `${subkeys.length} / ${subkeyLimitLabel}`, icon: '⌘' },
+    { label: 'Subkeys', value: `${fmtNum(displayedSubkeys)} / ${subkeyLimitLabel}`, icon: '⌘' },
     { label: 'Token usage', value: `${fmtNum(tokenUsage)} / ${tokenLimitLabel}`, icon: '↯' },
     { label: 'Current plan', value: currentPlan?.name || 'Free', icon: '▭' },
   ];
   const planMeters = [
     { label: 'Projects', used: projects.length, limit: projectLimit },
-    { label: 'Subkeys', used: subkeys.length, limit: subkeyLimit },
+    { label: 'Subkeys', used: displayedSubkeys, limit: subkeyLimit },
     { label: 'Tokens', used: tokenUsage, limit: tokenLimit },
   ];
 
@@ -68,8 +127,17 @@ export default function ProjectSelectView({ go }) {
       <nav className='project-console-nav'>
         <div className='project-console-brand'><span><LogoIcon size={18} /></span><div><strong>KeyGate</strong><small>Projects Console</small></div></div>
         <div className='project-console-nav-actions'>
-          <button className='project-console-icon-btn' type='button' aria-label='Notifications'><IconBell /></button>
-          <div className='project-console-user'><span>{avatar}</span>{userLabel}</div>
+          <button className='project-console-icon-btn' type='button' aria-label='Notifications' onClick={() => goProjectPage('notifications')}><IconBell /></button>
+          <div className='project-console-user-wrap'>
+            <button className='project-console-user' type='button' aria-haspopup='menu' aria-expanded={userMenuOpen} onClick={() => setUserMenuOpen((open) => !open)}><span>{avatar}</span>{userLabel}</button>
+            {userMenuOpen && <div className='project-console-user-menu' role='menu'>
+              <button type='button' role='menuitem' onClick={() => { setUserMenuOpen(false); go('/console/profile'); }}><IconUser /> Profile</button>
+              <button type='button' role='menuitem' onClick={() => { setUserMenuOpen(false); go('/console/workspace'); }}><IconSettings /> Workspace Settings</button>
+              <button type='button' role='menuitem' onClick={() => { setUserMenuOpen(false); go('/console/subscription'); }}><IconBilling /> Billing</button>
+              <button type='button' role='menuitem' onClick={() => { setUserMenuOpen(false); go('/console/docs'); }}><IconLogs /> Documentation</button>
+              <button type='button' role='menuitem' className='danger' onClick={() => { setUserMenuOpen(false); logout(); }}>Logout</button>
+            </div>}
+          </div>
         </div>
       </nav>
 
@@ -83,7 +151,7 @@ export default function ProjectSelectView({ go }) {
             <div className='console-plan-badge'>
               <span className='console-plan-dot' /> {currentPlan?.name || 'Free'} plan <span>{projects.length} / {projectLimitLabel} projects</span>
             </div>
-            <button className='btn btn-ghost console-create-btn' onClick={() => go('/console/subscription')}>Manage subscription</button>
+            <button className='btn btn-ghost console-create-btn project-console-manage-btn' onClick={() => go('/console/subscription')}>Manage subscription</button>
             <button className='btn btn-primary console-create-btn' disabled={isAtProjectLimit} onClick={() => go('/console/new')}>+ New project</button>
           </div>
         </header>
@@ -95,16 +163,16 @@ export default function ProjectSelectView({ go }) {
         <section className='project-console-onboarding card'>
           <div className='project-console-section-head'><div><strong>✣ Getting Started</strong><span>Complete these steps to get your API gateway running</span></div><b>{completedSteps}/{onboardingSteps.length}<small>Completed</small></b></div>
           <div className='project-console-progress'><span style={{ width: `${onboardingPercent}%` }} /></div>
-          <div className='project-console-steps'>{onboardingSteps.map((step) => <div className={step.done ? 'done' : ''} key={step.label}><IconCheck />{step.label}</div>)}</div>
+          <div className='project-console-steps'>{onboardingSteps.map((step) => { const StepTag = step.onClick ? 'button' : 'div'; return <StepTag type={step.onClick ? 'button' : undefined} className={`${step.done ? 'done' : ''} ${step.onClick ? 'clickable' : 'locked'}`} onClick={step.onClick} key={step.label}><IconCheck />{step.label}</StepTag>; })}</div>
         </section>
 
         <section className='project-console-actions-wrap'>
           <h2>Quick Actions</h2>
           <div className='project-console-actions'>
             <button onClick={() => go('/console/new')}><IconPlus /><span><strong>Create Project</strong><small>Get started</small></span><IconExternal /></button>
-            <button onClick={() => go(projects[0] ? `/console/${projects[0].slug}/masterkeys` : '/console/new')}><IconMasterKey /><span><strong>Add Provider</strong><small>Get started</small></span><IconExternal /></button>
-            <button onClick={() => go(projects[0] ? `/console/${projects[0].slug}/subkeys` : '/console/new')}><IconSubkey /><span><strong>Create Subkey</strong><small>Get started</small></span><IconExternal /></button>
-            <button onClick={() => go(projects[0] ? `/console/${projects[0].slug}/demo` : '/console/new')}><IconDemo /><span><strong>Open Live Demo</strong><small>Get started</small></span><IconExternal /></button>
+            <button onClick={() => goProjectPage('masterkeys')}><IconCheck /><span><strong>Add Provider</strong><small>{displayedMasterKeys > 0 ? 'Completed' : 'Get started'}</small></span><IconExternal /></button>
+            <button onClick={() => goProjectPage('subkeys')}><IconSubkey /><span><strong>Create Subkey</strong><small>{displayedSubkeys > 0 ? 'Completed' : 'Get started'}</small></span><IconExternal /></button>
+            <button onClick={() => goProjectPage('demo')}><IconDemo /><span><strong>Open Live Demo</strong><small>{requestCount > 0 ? 'Completed' : 'Get started'}</small></span><IconExternal /></button>
           </div>
         </section>
 
