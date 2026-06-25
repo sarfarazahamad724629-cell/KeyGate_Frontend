@@ -2682,3 +2682,56 @@ kbd{
 .source-filter-chip{display:inline-flex;align-items:center;border:1px solid rgba(45,202,114,.32);border-radius:999px;background:rgba(45,202,114,.13);color:#b8ffd0;font:inherit;font-size:12px;font-weight:700;padding:6px 10px;cursor:pointer;transition:background .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease}
 .source-filter-chip:hover{border-color:rgba(124,107,255,.55);color:#d9d4ff}
 .source-filter-chip.selected{border-color:rgba(124,107,255,.86);background:rgba(124,107,255,.22);color:#fff;box-shadow:0 8px 24px rgba(124,107,255,.14)}
+
+/* ── Project console dashboard refresh ── */
+.console-select-page{
+  background:#06070d;
+  min-height:100vh;
+}
+.project-console-nav{
+  position:sticky;
+  top:0;
+  z-index:130;
+  min-height:56px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:10px max(24px,calc((100vw - 1040px)/2));
+  border-bottom:1px solid #252a3d;
+  background:#101321;
+}
+.project-console-brand{display:flex;align-items:center;gap:10px}
+.project-console-brand>span{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,#7c6bff,#a594ff);box-shadow:0 8px 24px rgba(124,107,255,.34)}
+.project-console-brand strong{display:block;font-family:'Syne',sans-serif;font-size:13px;line-height:1;color:#fff}
+.project-console-brand small{display:block;margin-top:4px;color:#868a99;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.project-console-nav-actions{display:flex;align-items:center;gap:10px}
+.project-console-icon-btn{width:28px;height:28px;border:1px solid #34394d;border-radius:8px;background:#151827;color:#8d93a8;display:grid;place-items:center;cursor:pointer}
+.project-console-icon-btn svg{width:15px;height:15px}
+.project-console-user{height:32px;display:flex;align-items:center;gap:8px;padding:4px 12px 4px 5px;border:1px solid rgba(255,255,255,.9);border-radius:999px;color:#fff;font-size:12px;font-weight:700;background:#151827}
+.project-console-user span{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#7c6bff,#a594ff);box-shadow:inset 0 0 0 3px rgba(255,255,255,.22)}
+.console-select-page .console-select-content{max-width:1040px;padding:28px 0 54px;margin:0 auto}
+.console-select-page .project-console-hero{position:static;display:flex;align-items:flex-end;justify-content:space-between;padding:0;margin:0 0 24px;background:transparent;border:0;box-shadow:none;overflow:visible;backdrop-filter:none}
+.console-select-page .project-console-hero::before,.console-select-page .project-console-hero::after{display:none}
+.project-console-hero h1{font-size:30px!important;margin:0 0 4px!important;color:#fff;text-shadow:none!important}
+.project-console-hero p{font-size:13px;color:#8d93a8}
+.project-console-hero .console-top-bar{padding:0!important;background:transparent!important;border:0!important;box-shadow:none!important;gap:8px!important}
+.project-console-hero .console-create-btn{min-height:38px;padding:0 16px;border-radius:8px}
+.project-console-hero .console-plan-badge{height:34px;border-radius:8px;background:#151827;border-color:#51477f;color:#c8c7d6}
+.project-console-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.project-console-stat{min-height:80px;border:1px solid #282d40;border-radius:12px;background:#121420;padding:14px;display:flex;align-items:flex-start;justify-content:space-between;box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+.project-console-stat span{display:block;color:#858a9b;font-size:10px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.project-console-stat strong{font-family:'DM Mono',monospace;font-size:22px;line-height:1;color:#fff}
+.project-console-stat i{font-style:normal;color:#8d7fff;font-size:17px}
+.project-console-onboarding.card,.project-console-plan.card{background:#121420;border-color:#282d40;border-radius:13px;padding:18px 20px;margin-bottom:16px;box-shadow:none}
+.project-console-section-head{display:flex;justify-content:space-between;gap:18px;align-items:flex-start;margin-bottom:14px}
+.project-console-section-head strong{display:block;font-family:'Syne',sans-serif;font-size:13px;color:#fff}.project-console-section-head span{display:block;color:#858a9b;font-size:12px;margin-top:4px}.project-console-section-head b{font-size:18px;text-align:right}.project-console-section-head small{display:block;color:#858a9b;font-size:9px;text-transform:uppercase;letter-spacing:.08em}
+.project-console-progress{height:5px;border-radius:99px;background:#232432;margin-bottom:14px;overflow:hidden}.project-console-progress span{display:block;height:100%;border-radius:inherit;background:#8f78ff}
+.project-console-steps{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.project-console-steps div{height:33px;border:1px solid #ffffff26;border-radius:6px;display:flex;align-items:center;gap:8px;padding:0 10px;color:#8c90a0;font-size:12px;background:#161824}.project-console-steps div.done{border-color:#146f50;background:#102620;color:#fff}.project-console-steps svg{width:17px;height:17px;border-radius:50%;background:#202230;color:#555b6d;padding:2px;flex:none}.project-console-steps .done svg{background:#24c876;color:#fff}
+.project-console-actions-wrap{margin-bottom:18px}.project-console-actions-wrap h2,.project-console-projects-head h2{font-family:'Syne',sans-serif;font-size:14px;margin:0 0 10px;color:#fff}.project-console-actions-wrap h2::after{content:'';display:inline-block;width:90px;height:1px;background:#242838;margin-left:8px;vertical-align:middle}
+.project-console-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.project-console-actions button{height:68px;border:1px solid #282d40;border-radius:9px;background:#111219;color:#fff;display:flex;align-items:center;gap:12px;padding:0 13px;text-align:left;cursor:pointer}.project-console-actions button:first-child{background:#17142a;border-color:#665ba0}.project-console-actions button>svg:first-child{width:30px;height:30px;padding:7px;border-radius:7px;background:#222434;color:#8d7fff;flex:none}.project-console-actions button:first-child>svg:first-child{background:#725cff;color:#fff}.project-console-actions strong{display:block;font-size:12px}.project-console-actions small{display:block;color:#858a9b;margin-top:3px}.project-console-actions button>svg:last-child{width:13px;height:13px;margin-left:auto;color:#62687a}
+.project-console-plan{position:relative}.project-console-plan>.btn{position:absolute;right:20px;top:20px}.project-console-meters{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:18px}.project-console-meters p{display:flex;justify-content:space-between;margin-bottom:8px;font-size:12px}.project-console-meters p span{font-family:'DM Mono',monospace;color:#8d93a8}.project-console-meters div div{height:5px;background:#242633;border-radius:99px;overflow:hidden}.project-console-meters div div span{display:block;height:100%;border-radius:inherit;background:#35cf78}.project-console-meters small{color:#858a9b;font-size:11px;margin-top:8px;display:block}
+.console-select-page .console-info-banner{background:#121420;border-color:#282d40;padding:20px 52px 20px 20px!important;margin-bottom:16px}.console-select-page .console-info-banner::after{display:none}.console-banner-link{margin:0!important}
+.project-console-projects-head{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:0 0 10px}.project-console-projects-head h2 span{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;border:1px solid #6c7080;border-radius:5px;padding:2px 6px;margin-left:4px;color:#c9cedd}.project-console-search{position:relative;width:252px}.project-console-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:#6f7587}.project-console-search .console-search-input{height:34px;min-height:34px;padding:8px 12px 8px 32px;border-radius:7px;background:#121420;border-color:#282d40;box-shadow:none;font-size:12px}
+.console-select-page .console-projects-grid{grid-template-columns:repeat(2,minmax(0,337px));gap:16px}.console-select-page .console-project-card{min-height:182px;border-radius:11px;background:#151827;border-color:#353065;padding:20px!important;box-shadow:none;text-align:left}.console-project-card-header h3{font-size:17px!important}.console-project-card-header .badge{background:#0d553b!important;border-color:#17754f!important;color:#36f28b!important}.console-project-id{background:#202230!important;border-color:#3a3d4a!important}.console-project-delete svg{width:16px;height:16px}
+@media (max-width:1100px){.project-console-nav,.console-select-page .console-select-content{padding-left:18px;padding-right:18px}.project-console-stats,.project-console-actions{grid-template-columns:repeat(2,1fr)}.project-console-steps{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:720px){.project-console-nav{padding:10px 12px}.project-console-user{max-width:170px;overflow:hidden}.console-select-page .project-console-hero{display:grid;gap:14px}.project-console-stats,.project-console-actions,.project-console-meters,.console-select-page .console-projects-grid{grid-template-columns:1fr}.project-console-projects-head{align-items:stretch;flex-direction:column}.project-console-search{width:100%}.project-console-steps{grid-template-columns:1fr}.console-select-page .console-select-content{padding-top:20px}}
